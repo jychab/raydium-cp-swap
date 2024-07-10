@@ -10,7 +10,7 @@ use instructions::*;
 
 declare_id!("41SK4sLnWcUQaeWiMF1Xv1geHuQesYpAX2hXqZFfUBur");
 
-pub const ADMIN: Pubkey = pubkey!("FjsF2dg1njhxL9Cv1VezzHropmUDTWRQpcWLANv3jVR2");
+pub const ADMIN: Pubkey = pubkey!("G6kBnedts6uAivtY72ToaFHBs1UVbT9udiXmQZgMEjoF");
 
 pub const AUTH_SEED: &str = "vault_and_lp_mint_auth_seed";
 
