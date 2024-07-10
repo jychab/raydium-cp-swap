@@ -1,5 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program, BN } from "@coral-xyz/anchor";
+import { BN, Program } from "@coral-xyz/anchor";
+import { assert } from "chai";
 import { RaydiumCpSwap } from "../target/types/raydium_cp_swap";
 import {
   deposit,
@@ -8,7 +9,6 @@ import {
   setupDepositTest,
   withdraw,
 } from "./utils";
-import { assert } from "chai";
 
 describe("withdraw test", () => {
   anchor.setProvider(anchor.AnchorProvider.env());

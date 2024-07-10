@@ -5,17 +5,16 @@ use crate::error::ErrorCode;
 use crate::states::*;
 use crate::utils::*;
 use anchor_lang::{
-    accounts::interface_account::InterfaceAccount,
-    prelude::*,
-    solana_program::{clock, program::invoke, system_instruction},
+    accounts::interface_account::InterfaceAccount, prelude::*, solana_program::clock,
 };
-use anchor_spl::token::spl_token;
+use anchor_spl::associated_token::spl_associated_token_account::instruction::create_associated_token_account_idempotent;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::Token,
     token_2022::spl_token_2022,
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
+use solana_program::program::invoke;
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
@@ -94,15 +93,9 @@ pub struct Initialize<'info> {
     )]
     pub creator_token_1: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// creator lp token account
-    #[account(
-        init,
-        associated_token::mint = lp_mint,
-        associated_token::authority = creator,
-        payer = creator,
-        token::token_program = token_program,
-    )]
-    pub creator_lp_token: Box<InterfaceAccount<'info, TokenAccount>>,
+    /// CHECK: creator lp token account
+    #[account(mut)]
+    pub creator_lp_token: UncheckedAccount<'info>,
 
     /// CHECK: Token_0 vault for the pool
     #[account(
@@ -127,14 +120,6 @@ pub struct Initialize<'info> {
         bump,
     )]
     pub token_1_vault: UncheckedAccount<'info>,
-
-    /// create pool fee account
-    #[account(
-        mut,
-        address= crate::create_pool_fee_reveiver::id(),
-    )]
-    pub create_pool_fee: Box<InterfaceAccount<'info, TokenAccount>>,
-
     /// an account to store oracle observations
     #[account(
         init,
@@ -182,6 +167,24 @@ pub fn initialize(
         open_time = block_timestamp + 1;
     }
     // due to stack/heap limitations, we have to create redundant new accounts ourselves.
+    let ix = create_associated_token_account_idempotent(
+        &ctx.accounts.creator.key(),
+        &ctx.accounts.creator.key(),
+        &ctx.accounts.lp_mint.key(),
+        &ctx.accounts.token_program.key(),
+    );
+    invoke(
+        &ix,
+        &[
+            ctx.accounts.creator.to_account_info(),
+            ctx.accounts.creator_lp_token.to_account_info(),
+            ctx.accounts.creator.to_account_info(),
+            ctx.accounts.lp_mint.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+        ],
+    )?;
+
     create_token_account(
         &ctx.accounts.authority.to_account_info(),
         &ctx.accounts.creator.to_account_info(),
@@ -281,32 +284,6 @@ pub fn initialize(
             .ok_or(ErrorCode::InitLpAmountTooLess)?,
         &[&[crate::AUTH_SEED.as_bytes(), &[ctx.bumps.authority]]],
     )?;
-
-    // Charge the fee to create a pool
-    if ctx.accounts.amm_config.create_pool_fee != 0 {
-        invoke(
-            &system_instruction::transfer(
-                ctx.accounts.creator.key,
-                &ctx.accounts.create_pool_fee.key(),
-                u64::from(ctx.accounts.amm_config.create_pool_fee),
-            ),
-            &[
-                ctx.accounts.creator.to_account_info(),
-                ctx.accounts.create_pool_fee.to_account_info(),
-                ctx.accounts.system_program.to_account_info(),
-            ],
-        )?;
-        invoke(
-            &spl_token::instruction::sync_native(
-                ctx.accounts.token_program.key,
-                &ctx.accounts.create_pool_fee.key(),
-            )?,
-            &[
-                ctx.accounts.token_program.to_account_info(),
-                ctx.accounts.create_pool_fee.to_account_info(),
-            ],
-        )?;
-    }
 
     pool_state.initialize(
         ctx.bumps.authority,

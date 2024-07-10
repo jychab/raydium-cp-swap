@@ -18,8 +18,6 @@ pub struct AmmConfig {
     pub protocol_fee_rate: u64,
     /// The fund fee, denominated in hundredths of a bip (10^-6)
     pub fund_fee_rate: u64,
-    /// Fee for create a new pool
-    pub create_pool_fee: u64,
     /// Address of the protocol fee owner
     pub protocol_owner: Pubkey,
     /// Address of the fund fee owner
@@ -29,5 +27,5 @@ pub struct AmmConfig {
 }
 
 impl AmmConfig {
-    pub const LEN: usize = 8 + 1 + 1 + 2 + 4 * 8 + 32 * 2 + 8 * 16;
+    pub const LEN: usize = 8 + 1 + 1 + 2 + 3 * 8 + 32 * 2 + 8 * 16;
 }

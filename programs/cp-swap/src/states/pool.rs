@@ -104,7 +104,7 @@ impl PoolState {
         self.token_1_program = *token_1_mint.to_account_info().owner;
         self.observation_key = observation_key;
         self.auth_bump = auth_bump;
-        self.lp_mint_decimals = lp_mint.decimals;
+        self.lp_mint_decimals = 9;
         self.mint_0_decimals = token_0_mint.decimals;
         self.mint_1_decimals = token_1_mint.decimals;
         self.lp_supply = lp_supply;

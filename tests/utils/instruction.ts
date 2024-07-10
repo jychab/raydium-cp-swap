@@ -1,29 +1,27 @@
-import { Program, BN } from "@coral-xyz/anchor";
-import { RaydiumCpSwap } from "../../target/types/raydium_cp_swap";
+import { BN, Program } from "@coral-xyz/anchor";
 import {
-  Connection,
-  ConfirmOptions,
-  PublicKey,
-  Keypair,
-  Signer,
-  SystemProgram,
-  SYSVAR_RENT_PUBKEY,
-} from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
   getAssociatedTokenAddressSync,
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
+  ConfirmOptions,
+  Connection,
+  Keypair,
+  PublicKey,
+  Signer,
+  SystemProgram,
+} from "@solana/web3.js";
+import { RaydiumCpSwap } from "../../target/types/raydium_cp_swap";
+import {
   accountExist,
-  sendTransaction,
+  createTokenMintAndAssociatedTokenAccount,
   getAmmConfigAddress,
   getAuthAddress,
+  getOrcleAccountAddress,
   getPoolAddress,
   getPoolLpMintAddress,
   getPoolVaultAddress,
-  createTokenMintAndAssociatedTokenAccount,
-  getOrcleAccountAddress,
+  sendTransaction,
 } from "./index";
 
 import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
@@ -235,13 +233,7 @@ export async function createAmmConfig(
   }
 
   const ix = await program.methods
-    .createAmmConfig(
-      config_index,
-      tradeFeeRate,
-      protocolFeeRate,
-      fundFeeRate,
-      create_fee
-    )
+    .createAmmConfig(config_index, tradeFeeRate, protocolFeeRate, fundFeeRate)
     .accounts({
       owner: owner.publicKey,
       ammConfig: address,
@@ -319,25 +311,15 @@ export async function initialize(
   await program.methods
     .initialize(initAmount.initAmount0, initAmount.initAmount1, new BN(0))
     .accounts({
+      creatorLpToken: creatorLpTokenAddress,
       creator: creator.publicKey,
       ammConfig: configAddress,
-      authority: auth,
-      poolState: poolAddress,
       token0Mint: token0,
       token1Mint: token1,
-      lpMint: lpMintAddress,
       creatorToken0,
       creatorToken1,
-      creatorLpToken: creatorLpTokenAddress,
-      token0Vault: vault0,
-      token1Vault: vault1,
-      createPoolFee,
-      observationState: observationAddress,
-      tokenProgram: TOKEN_PROGRAM_ID,
       token0Program: token0Program,
       token1Program: token1Program,
-      systemProgram: SystemProgram.programId,
-      rent: SYSVAR_RENT_PUBKEY,
     })
     .rpc(confirmOptions);
   const poolState = await program.account.poolState.fetch(poolAddress);
@@ -405,15 +387,12 @@ export async function deposit(
     .deposit(lp_token_amount, maximum_token_0_amount, maximum_token_1_amount)
     .accounts({
       owner: owner.publicKey,
-      authority: auth,
       poolState: poolAddress,
       ownerLpToken,
       token0Account: onwerToken0,
       token1Account: onwerToken1,
       token0Vault: vault0,
       token1Vault: vault1,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      tokenProgram2022: TOKEN_2022_PROGRAM_ID,
       vault0Mint: token0,
       vault1Mint: token1,
       lpMint: lpMintAddress,
@@ -483,19 +462,15 @@ export async function withdraw(
     .withdraw(lp_token_amount, minimum_token_0_amount, minimum_token_1_amount)
     .accounts({
       owner: owner.publicKey,
-      authority: auth,
       poolState: poolAddress,
       ownerLpToken,
       token0Account: onwerToken0,
       token1Account: onwerToken1,
       token0Vault: vault0,
       token1Vault: vault1,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      tokenProgram2022: TOKEN_2022_PROGRAM_ID,
       vault0Mint: token0,
       vault1Mint: token1,
       lpMint: lpMintAddress,
-      memoProgram: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
     })
     .rpc(confirmOptions)
     .catch();
@@ -555,7 +530,6 @@ export async function swap_base_input(
     .swapBaseInput(amount_in, minimum_amount_out)
     .accounts({
       payer: owner.publicKey,
-      authority: auth,
       ammConfig: configAddress,
       poolState: poolAddress,
       inputTokenAccount,
@@ -625,7 +599,6 @@ export async function swap_base_output(
     .swapBaseOutput(max_amount_in, amount_out_less_fee)
     .accounts({
       payer: owner.publicKey,
-      authority: auth,
       ammConfig: configAddress,
       poolState: poolAddress,
       inputTokenAccount,

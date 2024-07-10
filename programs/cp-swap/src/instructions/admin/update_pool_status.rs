@@ -1,10 +1,10 @@
-use crate::states::*;
+use crate::{states::*, ADMIN};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct UpdatePoolStatus<'info> {
     #[account(
-        address = crate::admin::id()
+        address = ADMIN
     )]
     pub authority: Signer<'info>,
 

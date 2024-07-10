@@ -1,12 +1,12 @@
 use crate::curve::fees::FEE_RATE_DENOMINATOR_VALUE;
 use crate::error::ErrorCode;
-use crate::states::*;
+use crate::{states::*, ADMIN};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct UpdateAmmConfig<'info> {
     /// The amm config owner or admin
-    #[account(address = crate::admin::id() @ ErrorCode::InvalidOwner)]
+    #[account(address = ADMIN @ ErrorCode::InvalidOwner)]
     pub owner: Signer<'info>,
 
     /// Amm config account to be changed
@@ -29,8 +29,7 @@ pub fn update_amm_config(ctx: Context<UpdateAmmConfig>, param: u8, value: u64) -
             let new_fund_owner = *ctx.remaining_accounts.iter().next().unwrap().key;
             set_new_fund_owner(amm_config, new_fund_owner)?;
         }
-        Some(5) => amm_config.create_pool_fee = value,
-        Some(6) => amm_config.disable_create_pool = if value == 0 { false } else { true },
+        Some(5) => amm_config.disable_create_pool = if value == 0 { false } else { true },
         _ => return err!(ErrorCode::InvalidInput),
     }
 

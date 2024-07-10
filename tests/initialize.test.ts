@@ -1,10 +1,10 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program, BN } from "@coral-xyz/anchor";
+import { BN, Program } from "@coral-xyz/anchor";
 import { RaydiumCpSwap } from "../target/types/raydium_cp_swap";
 
 import { getAccount, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { setupInitializeTest, initialize, calculateFee } from "./utils";
 import { assert } from "chai";
+import { calculateFee, initialize, setupInitializeTest } from "./utils";
 
 describe("initialize test", () => {
   anchor.setProvider(anchor.AnchorProvider.env());

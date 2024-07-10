@@ -1,5 +1,5 @@
 use crate::error::ErrorCode;
-use crate::states::*;
+use crate::{states::*, ADMIN};
 use anchor_lang::prelude::*;
 use std::ops::DerefMut;
 
@@ -9,7 +9,7 @@ pub struct CreateAmmConfig<'info> {
     /// Address to be set as protocol owner.
     #[account(
         mut,
-        address = crate::admin::id() @ ErrorCode::InvalidOwner
+        address = ADMIN @ ErrorCode::InvalidOwner
     )]
     pub owner: Signer<'info>,
 
@@ -35,7 +35,6 @@ pub fn create_amm_config(
     trade_fee_rate: u64,
     protocol_fee_rate: u64,
     fund_fee_rate: u64,
-    create_pool_fee: u64,
 ) -> Result<()> {
     let amm_config = ctx.accounts.amm_config.deref_mut();
     amm_config.protocol_owner = ctx.accounts.owner.key();
@@ -45,7 +44,6 @@ pub fn create_amm_config(
     amm_config.trade_fee_rate = trade_fee_rate;
     amm_config.protocol_fee_rate = protocol_fee_rate;
     amm_config.fund_fee_rate = fund_fee_rate;
-    amm_config.create_pool_fee = create_pool_fee;
     amm_config.fund_owner = ctx.accounts.owner.key();
     Ok(())
 }
